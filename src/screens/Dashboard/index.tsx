@@ -5,6 +5,7 @@ import { ActivityIndicator } from 'react-native';
 import { useTheme } from 'styled-components';
 import { HighLightCard } from '../../components/HighLightCard';
 import { TransactionCard, TransactionCardProps } from '../../components/TransactionCard';
+import { useAuth } from '../../hooks/auth';
 
 import {
   Container,
@@ -40,6 +41,7 @@ interface HighLightData {
 }
 const Dashboard: React.FC = () => {
   const theme = useTheme();
+  const { signOut, user } = useAuth();
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [highLightData, setHighLightData ] = useState<HighLightData>({} as HighLightData);
   const [transactions, setTransactions]  = useState<DataListProps[]>([]);
@@ -47,9 +49,15 @@ const Dashboard: React.FC = () => {
   const getLastTransactionDate = useCallback((
     collection: DataListProps[],
     type: 'positive' | 'negative'
-  ): string => {
-    const lastTransactionDate =  Math.max.apply(Math, collection
-      .filter((transaction) => transaction.type === type)
+  ): any => {
+    const collectionFiltered = collection
+    .filter((transaction) => transaction.type === type);
+
+    if(collectionFiltered.length === 0) {
+      return 0;
+    }
+
+    const lastTransactionDate =  Math.max.apply(Math, collectionFiltered
       .map((transaction) => new Date(transaction.date).getTime()));
 
     return Intl.DateTimeFormat('pt-BR', {
@@ -60,7 +68,7 @@ const Dashboard: React.FC = () => {
 
   const loadTransactions = useCallback(async () => {
     try {
-      const dataKey = '@gofinances:transactions';
+      const dataKey = `@gofinances:transactions_user:${user.id}`;
       const response = await AsyncStorage.getItem(dataKey);
       const transactions = response ? JSON.parse(response) : [];
 
@@ -104,21 +112,27 @@ const Dashboard: React.FC = () => {
             style: 'currency',
             currency: 'BRL',
           }),
-          lastTransaction: `Última entrada dia ${lastTransactionEntries}`,
+          lastTransaction: lastTransactionEntries === 0
+          ? "Não há transações"
+          : `Última entrada dia ${lastTransactionEntries}`,
         },
         expensive: {
           amount: expensiveTotal.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL',
           }),
-          lastTransaction: `Última saída dia ${lastTransactionExpensive}`,
+          lastTransaction: lastTransactionExpensive === 0
+          ? "Não há transações"
+          : `Última saída dia ${lastTransactionExpensive}`,
         },
         total: {
           amount: total.toLocaleString('pt-BR', {
             style: 'currency',
             currency: 'BRL',
           }),
-          lastTransaction: `01 à ${lastTransactionExpensive}`,
+          lastTransaction: lastTransactionExpensive === 0
+          ? "Não há transações"
+          : `01 à ${lastTransactionExpensive}`,
         },
       })
 
@@ -152,15 +166,15 @@ const Dashboard: React.FC = () => {
           <Header>
             <UserWrapper>
               <UserInfo>
-                <Photo source={{uri: 'https://pfpmaker.com/_nuxt/img/profile-3-1.3e702c5.png'}}/>
+                <Photo source={{uri: user.photo || `https://ui-avatars.com/api/?name=${user.name}&length=1`}}/>
                 <User>
                   <UserGreeting>Olá,</UserGreeting>
-                  <UserName>Kleison</UserName>
+                  <UserName>{user.name}</UserName>
                 </User>
               </UserInfo>
 
               <LogoutButton
-                onPress={() => {}}
+                onPress={signOut}
               >
                 <Icon name='power'/>
               </LogoutButton>

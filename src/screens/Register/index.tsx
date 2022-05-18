@@ -27,6 +27,7 @@ import {
   Fields,
   TransactionsTypes,
 } from './styles';
+import { useAuth } from '../../hooks/auth';
 
 
 
@@ -44,6 +45,7 @@ const schema = Yup.object().shape({
 })
 
 const Register: React.FC = () => {
+  const { user } = useAuth();
   const { navigate }: NavigationProp<ParamListBase> = useNavigation();
   const {
     control,
@@ -94,7 +96,7 @@ const Register: React.FC = () => {
     }
 
     try {
-      const dataKey = '@gofinances:transactions';
+      const dataKey = `@gofinances:transactions_user:${user.id}`;
 
       const storageData = await AsyncStorage.getItem(dataKey);
       const currentData = storageData ? JSON.parse(storageData) : [];

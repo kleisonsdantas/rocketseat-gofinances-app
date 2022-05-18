@@ -24,6 +24,7 @@ import {
   ChartContainer,
   LoadContainer,
 } from './styles';
+import { useAuth } from '../../hooks/auth';
 
 interface TransactionData {
   type: 'positive' | 'negative';
@@ -44,6 +45,7 @@ interface CategoryData {
 
 const Resume: React.FC = () => {
   const theme = useTheme();
+  const { user } = useAuth();
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [totalByCategories, setTotalByCategories] = useState<CategoryData[]>([]);
@@ -55,7 +57,7 @@ const Resume: React.FC = () => {
   const loadTransactions = useCallback(async () => {
     setIsLoadingData(true);
     try {
-      const dataKey = '@gofinances:transactions';
+      const dataKey = `@gofinances:transactions_user:${user.id}`;
       const response = await AsyncStorage.getItem(dataKey);
       const transactions = response ? JSON.parse(response) : [];
 
